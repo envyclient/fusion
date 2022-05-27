@@ -20,7 +20,7 @@ public class InjectionConfiguration {
     }
 
     @AllArgsConstructor
-    private static final class Definition {
+    public static final class Definition {
 
         @NonNull
         public final String className;

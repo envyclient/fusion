@@ -27,7 +27,7 @@
         <dependency>
             <groupId>com.github.Mat1337</groupId>
             <artifactId>jprocessor</artifactId>
-            <version>1.4</version>
+            <version>1.4.2</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
