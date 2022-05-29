@@ -6,7 +6,7 @@
 
     <groupId>com.envyclient</groupId>
     <artifactId>fusion</artifactId>
-    <version>1.1.5</version>
+    <version>1.1.6</version>
 
     <name>fusion</name>
     <description>Minecraft code injection / modification library</description>
