@@ -26,7 +26,7 @@ public class Fusion implements ClassTransformer {
     private final MemoryJar memoryJar;
 
     public Fusion(Map<String, byte[]> data, Map<String, String> configurations) {
-        this.memoryJar = JProcessor.Jar.load(data);
+        this.memoryJar = JProcessor.Jar.load(data, "net.minecraft.client.main.Main");
 
         // load all the injection configurations
         configurations.forEach((name, configuration) -> configurationList.add(InjectionConfiguration.load(configuration)));
