@@ -34,7 +34,7 @@ public class Fusion implements ClassTransformer {
         // load all the hooks
         configurationList.forEach(injectionConfiguration
                 -> Stream.of(injectionConfiguration.hookDefinitions).forEach(definition
-                -> loadHooks(definition.className, memoryJar.getClass(definition.className))));
+                -> loadHooks(definition, memoryJar.getClass(definition))));
 
         // transform all the hook targets
         hookTargets.stream().map(memoryJar::getClass).forEach(memoryClass -> memoryClass.transform(this));

@@ -13,18 +13,10 @@ public class InjectionConfiguration {
 
     @NonNull
     @SerializedName("hooks")
-    public final Definition[] hookDefinitions;
+    public final String[] hookDefinitions;
 
     public static InjectionConfiguration load(String configuration) {
         return GSON.fromJson(configuration, InjectionConfiguration.class);
-    }
-
-    @AllArgsConstructor
-    public static final class Definition {
-
-        @NonNull
-        public final String className;
-
     }
 
 }
