@@ -1,4 +1,4 @@
-package com.envyclient.fusion.injection.manifest;
+package com.envyclient.fusion.injection.hook.manifest;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Hook {
 
-    String value();
+    Class<?> value();
 
 }

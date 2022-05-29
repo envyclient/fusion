@@ -1,27 +1,20 @@
 package com.envyclient.fusion;
 
 import com.envyclient.fusion.injection.InjectionConfiguration;
-import com.envyclient.fusion.injection.manifest.Hook;
+import com.envyclient.fusion.injection.hook.ClassHook;
 import me.mat.jprocessor.JProcessor;
 import me.mat.jprocessor.jar.MemoryJar;
-import me.mat.jprocessor.jar.cls.MemoryAnnotation;
 import me.mat.jprocessor.jar.cls.MemoryClass;
-import me.mat.jprocessor.jar.cls.MemoryField;
-import me.mat.jprocessor.jar.cls.MemoryMethod;
-import me.mat.jprocessor.transformer.ClassTransformer;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class Fusion implements ClassTransformer {
+public class Fusion {
 
     private final List<InjectionConfiguration> configurationList = new ArrayList<>();
-    private final List<String> hookTargets = new ArrayList<>();
+    private final List<ClassHook> classHooks = new ArrayList<>();
 
     private final MemoryJar memoryJar;
 
@@ -31,38 +24,20 @@ public class Fusion implements ClassTransformer {
         // load all the injection configurations
         configurations.forEach((name, configuration) -> configurationList.add(InjectionConfiguration.load(configuration)));
 
-        // load all the hooks
+        // loop through all the hook definitions
         configurationList.forEach(injectionConfiguration
-                -> Stream.of(injectionConfiguration.hookDefinitions).forEach(definition
-                -> loadHooks(definition, memoryJar.getClass(definition))));
+                -> Stream.of(injectionConfiguration.hookDefinitions).forEach(definition -> {
 
-        // transform all the hook targets
-        hookTargets.stream().map(memoryJar::getClass).forEach(memoryClass -> memoryClass.transform(this));
-    }
+            // get the class of the definition
+            MemoryClass definitionClass = memoryJar.getClass(definition);
 
-    private void loadHooks(String className, MemoryClass memoryClass) {
-        // if the provided class is invalid
-        if (memoryClass == null) {
-            // throw an exception
-            throw new RuntimeException("Invalid hooks class: " + className);
-        }
+            // if the class is valid
+            if (definitionClass != null) {
 
-        // if the class has the Hook annotation
-        if (memoryClass.isAnnotationPresent(Hook.class)) {
-
-            // get the annotation
-            MemoryAnnotation annotation = memoryClass.getAnnotation(Hook.class);
-
-            // get the value of the annotation
-            Object value = annotation.value();
-
-            // if the value is valid
-            if (value != null) {
-
-                // add the hook to the hook targets
-                hookTargets.add(value.toString());
+                // add a new class hook
+                classHooks.add(new ClassHook(definitionClass, memoryJar));
             }
-        }
+        }));
     }
 
     /**
@@ -75,31 +50,4 @@ public class Fusion implements ClassTransformer {
         return memoryJar.exportClasses();
     }
 
-    @Override
-    public void transform(MemoryClass memoryClass) {
-
-    }
-
-    @Override
-    public void transform(MemoryClass memoryClass, MemoryField memoryField) {
-
-    }
-
-    @Override
-    public void transform(MemoryClass memoryClass, MemoryMethod memoryMethod) {
-        if (memoryClass.name().equals("net/minecraft/client/Minecraft")) {
-            System.out.println("> Found Minecraft");
-            if (memoryMethod.name().equals("startAttack")) {
-                System.out.println("> Found startAttack");
-
-                InsnList instructions = memoryMethod.getInstructions();
-                instructions.insert(new MethodInsnNode(
-                        Opcodes.INVOKESTATIC,
-                        "com/envyclient/sdk/SDK",
-                        "init",
-                        "()V"
-                ));
-            }
-        }
-    }
 }
