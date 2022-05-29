@@ -1,10 +1,10 @@
 package com.envyclient.fusion.injection.hook;
 
 import com.envyclient.fusion.injection.hook.manifest.At;
-import jdk.internal.org.objectweb.asm.Opcodes;
 import lombok.NonNull;
 import me.mat.jprocessor.jar.cls.MemoryClass;
 import me.mat.jprocessor.jar.cls.MemoryMethod;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LineNumberNode;
