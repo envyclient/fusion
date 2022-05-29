@@ -105,6 +105,9 @@ public class ClassHook implements ClassTransformer {
                 // get the value of the annotation aka the class name of the class that will be hooked
                 String className = memoryAnnotation.value().toString();
 
+                // fix up the class name
+                className = className.substring(1, className.length() - 1);
+
                 // get the class that will be hooked
                 MemoryClass hookClass = memoryJar.getClass(className);
 

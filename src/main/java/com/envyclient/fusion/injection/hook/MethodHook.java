@@ -124,7 +124,7 @@ public class MethodHook {
                 }
             } else if (instruction instanceof MethodInsnNode) {
                 MethodInsnNode methodInsnNode = (MethodInsnNode) instruction;
-                if (methodInsnNode.owner.equals(targetOwner)
+                if (methodInsnNode.owner.endsWith(targetOwner)
                         && methodInsnNode.name.equals(targetName)
                         && methodInsnNode.desc.equals(targetDescription)
                         && isOverLine) {
