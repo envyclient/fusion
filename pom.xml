@@ -6,7 +6,7 @@
 
     <groupId>com.envyclient</groupId>
     <artifactId>fusion</artifactId>
-    <version>1.1.4</version>
+    <version>1.1.5</version>
 
     <name>fusion</name>
     <description>Minecraft code injection / modification library</description>
@@ -27,7 +27,7 @@
         <dependency>
             <groupId>com.github.Mat1337</groupId>
             <artifactId>jprocessor</artifactId>
-            <version>1.4.5</version>
+            <version>1.4.6</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

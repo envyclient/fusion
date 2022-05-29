@@ -46,11 +46,21 @@ public class Fusion implements ClassTransformer {
             // throw an exception
             throw new RuntimeException("Invalid hooks class: " + className);
         }
+
+        // if the class has the Hook annotation
         if (memoryClass.isAnnotationPresent(Hook.class)) {
+
+            // get the annotation
             MemoryAnnotation annotation = memoryClass.getAnnotation(Hook.class);
-            String value = annotation.value().toString();
+
+            // get the value of the annotation
+            Object value = annotation.value();
+
+            // if the value is valid
             if (value != null) {
-                hookTargets.add(value);
+
+                // add the hook to the hook targets
+                hookTargets.add(value.toString());
             }
         }
     }
