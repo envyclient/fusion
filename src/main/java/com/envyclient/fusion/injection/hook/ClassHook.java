@@ -114,14 +114,31 @@ public class ClassHook implements ClassTransformer {
         throw new RuntimeException(hookDefinitionClass.getClass().getName() + " does not have a Hook annotation");
     }
 
+    /**
+     * Loads all the hook definitions from the current hook class
+     *
+     * @param memoryJar memory jar that you want to load from
+     */
+
     private void loadHookDefinitions(MemoryJar memoryJar) {
+        // loop through all the methods in the hook definition class
         hookDefinitionClass.methods.forEach(memoryMethod -> {
+
+            // if the method has the definition annotation
             if (memoryMethod.isAnnotationPresent(Definition.class)) {
+
+                // get the memory annotation
                 MemoryAnnotation memoryAnnotation = memoryMethod.getAnnotation(Definition.class);
+
+                // if the annotation has the name attribute
                 if (memoryAnnotation.hasValue("name")) {
+
+                    // get the type from the annotation
                     String type = getValue(memoryAnnotation, "type").toString();
                     type = type.substring(1, type.length() - 1);
                     type = type.replaceAll("\\. ", "/");
+
+                    // and load the hook annotation into memory
                     hookDefinitions.put(
                             getValue(memoryAnnotation, "name").toString(),
                             new HookDefinition(
