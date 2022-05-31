@@ -54,10 +54,6 @@ public class ClassHook implements ClassTransformer {
     }
 
     @Override
-    public void transform(MemoryClass memoryClass, MemoryField memoryField) {
-    }
-
-    @Override
     public void transform(MemoryClass memoryClass, MemoryMethod memoryMethod) {
         // transform all the method hooks
         hooks.forEach(methodHook -> methodHook.transform(memoryClass, memoryMethod));

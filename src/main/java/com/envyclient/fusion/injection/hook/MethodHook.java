@@ -56,6 +56,11 @@ public class MethodHook implements MethodTransformer {
         memoryMethod.instructions.insertAfter(findHookPoint(memoryMethod), instructions);
     }
 
+    @Override
+    public void transform(MemoryClass memoryClass, MemoryMethod memoryMethod,
+                          MemoryInstructions memoryInstructions, AbstractInsnNode abstractInsnNode) {
+    }
+
     public MethodHook init(MemoryMethod definitionMethod) {
         // inject the wrapper method into the class
         this.wrapperMethod = classHook.injectMethod(
