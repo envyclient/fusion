@@ -7,12 +7,12 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface HookAt {
+public @interface Definition {
 
-    String method();
+    Class<?> type();
 
-    At at();
+    int line();
 
-    String definition();
+    String name();
 
 }

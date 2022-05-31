@@ -4,7 +4,7 @@ import com.envyclient.fusion.injection.InjectionConfiguration;
 import com.envyclient.fusion.injection.hook.ClassHook;
 import me.mat.jprocessor.JProcessor;
 import me.mat.jprocessor.jar.MemoryJar;
-import me.mat.jprocessor.jar.cls.MemoryClass;
+import me.mat.jprocessor.jar.clazz.MemoryClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +38,9 @@ public class Fusion {
                 classHooks.add(new ClassHook(definitionClass, memoryJar));
             }
         }));
+
+        // transform all the hooks classes
+        classHooks.forEach(ClassHook::transform);
     }
 
     /**

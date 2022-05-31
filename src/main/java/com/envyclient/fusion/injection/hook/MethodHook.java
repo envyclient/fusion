@@ -2,8 +2,11 @@ package com.envyclient.fusion.injection.hook;
 
 import com.envyclient.fusion.injection.hook.manifest.At;
 import lombok.NonNull;
-import me.mat.jprocessor.jar.cls.MemoryClass;
-import me.mat.jprocessor.jar.cls.MemoryMethod;
+import lombok.RequiredArgsConstructor;
+import me.mat.jprocessor.jar.clazz.MemoryClass;
+import me.mat.jprocessor.jar.clazz.MemoryInstructions;
+import me.mat.jprocessor.jar.clazz.MemoryMethod;
+import me.mat.jprocessor.transformer.MethodTransformer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
@@ -12,10 +15,8 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class MethodHook {
-
-    @NonNull
-    private final MemoryClass memoryClass;
+@RequiredArgsConstructor
+public class MethodHook implements MethodTransformer {
 
     @NonNull
     private final ClassHook classHook;
@@ -27,108 +28,101 @@ public class MethodHook {
     private final At at;
 
     @NonNull
-    private final MemoryMethod wrapperMethod;
+    private final HookDefinition hookDefinition;
 
-    private String targetOwner;
-    private String targetName;
-    private String targetDescription;
+    private MemoryMethod wrapperMethod;
 
-    @NonNull
-    private final int line;
-
-    public MethodHook(@NonNull MemoryMethod definitionMethod, @NonNull MemoryClass memoryClass, @NonNull ClassHook classHook, @NonNull String method, @NonNull At at, @NonNull String description, String instruction, @NonNull int line) {
-        this.memoryClass = memoryClass;
-        this.classHook = classHook;
-        this.method = method;
-        this.at = at;
-        this.line = line;
-
-        String inst = instruction;
-        if (inst != null) {
-            if (inst.startsWith("this.")) {
-                inst = inst.substring(5);
-            }
-
-            String[] data = inst.split("\\.");
-            this.targetOwner = data[0];
-            this.targetName = data[1].substring(0, data[1].indexOf("("));
-            this.targetDescription = data[1].substring(data[1].indexOf("("));
-
-            System.out.println("-----");
-            System.out.println("owner: " + targetOwner);
-            System.out.println("name: " + targetName);
-            System.out.println("description: " + targetDescription);
-            System.out.println("-----");
+    @Override
+    public void transform(MemoryClass memoryClass, MemoryMethod memoryMethod) {
+        // if the current class it not the hook class
+        if (!memoryClass.equals(classHook.getHookClass())) {
+            // return out of the method
+            return;
         }
 
+        // if the method is not the method that needs to be hooked
+        if (!isHookMethod(memoryMethod)) {
+            // return out of the method
+            return;
+        }
+
+        // define a new list of instructions
+        MemoryInstructions instructions = new MemoryInstructions();
+
+        // add the method invoke
+        instructions.addInvoke(wrapperMethod);
+
+        // insert the invoke instruction into the hook method
+        memoryMethod.instructions.insertAfter(findHookPoint(memoryMethod), instructions);
+    }
+
+    public MethodHook init(MemoryMethod definitionMethod) {
         // inject the wrapper method into the class
         this.wrapperMethod = classHook.injectMethod(
                 Opcodes.ACC_PUBLIC,
-                method + "Hook" + at + Math.abs(ThreadLocalRandom.current().nextInt(256)),
-                description,
+                definitionMethod.name() + "Hook" + at + Math.abs(ThreadLocalRandom.current().nextInt(256)),
+                definitionMethod.description(),
                 null,
                 null
         );
 
-        // clear all the instructions in the wrapper method
-        this.wrapperMethod.getInstructions().clear();
+        // copy over the definition instructions into the new injected method
+        definitionMethod.instructions.addInto(this.wrapperMethod.instructions, true);
 
-        // loop through all the instructions in the definition method
-        for (AbstractInsnNode abstractInsnNode : definitionMethod.getInstructions()) {
-
-            // copy the instruction over into the wrapper method
-            this.wrapperMethod.getInstructions().add(abstractInsnNode);
-        }
-
-        // hook the method
-        this.hook();
+        // return the handle of this hook
+        return this;
     }
 
-    private void hook() {
-        MemoryMethod memoryMethod = getMethodToHook();
-        if (at.equals(At.TAIL)) {
-            InsnList instructions = memoryMethod.getInstructions();
-            instructions.insertBefore(
-                    instructions.get(findHookPoint(memoryMethod) + 1),
-                    new MethodInsnNode(
-                            Opcodes.INVOKEVIRTUAL,
-                            classHook.getHookClass().name(),
-                            wrapperMethod.name(),
-                            wrapperMethod.description()
-                    )
-            );
-            System.out.println("[INFO]: Hook injected");
-        }
-    }
+    private boolean isHookMethod(MemoryMethod memoryMethod) {
+        // define the name and the description
+        String name = method;
+        String description = "";
 
-    private MemoryMethod getMethodToHook() {
-        String name = method.substring(0, method.indexOf("("));
-        String description = method.substring(method.indexOf("(") + 1);
-        for (MemoryMethod memoryMethod : classHook.getHookClass().methods) {
-            if (memoryMethod.name().equals(name) && memoryMethod.description().equals(description)) {
-                return memoryMethod;
+        // if the name contains the special character
+        if (!name.contains("<")) {
+
+            // get the name of the method
+            name = method.substring(0, method.indexOf("("));
+
+            // and get the description of the method
+            description = method.substring(method.indexOf("(") + 1);
+        }
+
+        // if the provided methods name matches with the fetched name
+        if (memoryMethod.name().equals(name)) {
+
+            // check if the description is empty
+            if (description.equals("")) {
+
+                // if so return true
+                return true;
             }
+
+            // else check that the descriptions match
+            return memoryMethod.description().equals(description);
         }
-        throw new RuntimeException(classHook.getHookClass().name() + " does not contain method '" + method + "'");
+
+        // if nothing was matched return false out of the method
+        return false;
     }
 
-    private int findHookPoint(MemoryMethod method) {
+    private AbstractInsnNode findHookPoint(MemoryMethod method) {
         boolean isOverLine = false;
         InsnList instructions = method.getInstructions();
         for (int i = 0; i < instructions.size(); i++) {
             AbstractInsnNode instruction = instructions.get(i);
             if (instruction instanceof LineNumberNode) {
                 LineNumberNode lineNumberNode = (LineNumberNode) instruction;
-                if (lineNumberNode.line >= line) {
+                if (lineNumberNode.line >= hookDefinition.line) {
                     isOverLine = true;
                 }
             } else if (instruction instanceof MethodInsnNode) {
                 MethodInsnNode methodInsnNode = (MethodInsnNode) instruction;
-                if (methodInsnNode.owner.endsWith(targetOwner)
-                        && methodInsnNode.name.equals(targetName)
-                        && methodInsnNode.desc.equals(targetDescription)
+                if (methodInsnNode.owner.endsWith(hookDefinition.typeClass.name())
+                        && methodInsnNode.name.equals(hookDefinition.name)
+                        && methodInsnNode.desc.equals(hookDefinition.description)
                         && isOverLine) {
-                    return i;
+                    return methodInsnNode;
                 }
             }
         }
