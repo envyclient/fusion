@@ -15,7 +15,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
-@Getter
 public class ClassPath {
 
     private static final String CLASS_SUFFIX = ".class";
@@ -25,8 +24,10 @@ public class ClassPath {
     private final Map<String, byte[]> classes = new HashMap<>();
     private final Map<String, byte[]> resources = new HashMap<>();
 
+    @Getter
     private final Map<String, String> configurations = new HashMap<>();
 
+    @Getter
     private URL[] urls;
 
     public ClassPath(boolean loadFromClassPath) {
@@ -293,6 +294,32 @@ public class ClassPath {
 
     public byte[] getResourceData(String path) {
         return resources.getOrDefault(path, null);
+    }
+
+    /**
+     * Gets all the classes
+     *
+     * @return {@link Map}
+     */
+
+    public Map<String, byte[]> getClasses() {
+        Map<String, byte[]> classes = new HashMap<>();
+        this.classes.forEach((className, bytes)
+                -> classes.put(className.replaceAll("\\.", "/"), bytes));
+        return classes;
+    }
+
+    /**
+     * Gets all the resources
+     *
+     * @return {@link Map}
+     */
+
+    public Map<String, byte[]> getResources() {
+        Map<String, byte[]> resources = new HashMap<>();
+        this.resources.forEach((className, bytes)
+                -> resources.put(className.replaceAll("\\.", "/"), bytes));
+        return resources;
     }
 
 }
