@@ -22,6 +22,8 @@ public class ClassPath {
     private static final String MOD_MANIFEST_SUFFIX = "mod.json";
 
     private final Map<String, byte[]> classes = new HashMap<>();
+
+    @Getter
     private final Map<String, byte[]> resources = new HashMap<>();
 
     @Getter
@@ -116,10 +118,6 @@ public class ClassPath {
             loadJar(file);
         } else {
 
-            // else replace all the slashes with dots
-            name = name.replaceAll("\\\\", ".");
-            name = name.replaceAll("/", ".");
-
             // read the data of the file
             byte[] data;
             try {
@@ -130,6 +128,10 @@ public class ClassPath {
 
             // if the name ends with a class suffix
             if (name.endsWith(CLASS_SUFFIX)) {
+
+                // else replace all the slashes with dots
+                name = name.replaceAll("\\\\", ".");
+                name = name.replaceAll("/", ".");
 
                 // load the class into the class path
                 classes.put(name.substring(0, name.length() - CLASS_SUFFIX.length()), data);
@@ -307,22 +309,6 @@ public class ClassPath {
         this.classes.forEach((className, bytes)
                 -> classes.put(className.replaceAll("\\.", "/"), bytes));
         return classes;
-    }
-
-    /**
-     * Gets all the resources
-     *
-     * @return {@link Map}
-     */
-
-    public Map<String, byte[]> getResources() {
-        Map<String, byte[]> resources = new HashMap<>();
-        this.resources.forEach((className, bytes) -> {
-            String name = className.substring(0, className.lastIndexOf("\\."));
-            name = name.replaceAll("\\.", "/");
-            resources.put(name + className.substring(className.lastIndexOf("\\.") + 1), bytes);
-        });
-        return resources;
     }
 
 }
