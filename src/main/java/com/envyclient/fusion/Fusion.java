@@ -51,7 +51,8 @@ public class Fusion {
         );
 
         // load all the injection configurations
-        classPath.getConfigurations().forEach((name, configuration) -> configurationList.add(InjectionConfiguration.load(configuration)));
+        classPath.getConfigurations().forEach((name, configuration)
+                -> configurationList.add(InjectionConfiguration.load(configuration)));
 
         // loop through all the hook definitions
         configurationList.forEach(injectionConfiguration

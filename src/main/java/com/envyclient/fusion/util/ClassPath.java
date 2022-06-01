@@ -317,8 +317,11 @@ public class ClassPath {
 
     public Map<String, byte[]> getResources() {
         Map<String, byte[]> resources = new HashMap<>();
-        this.resources.forEach((className, bytes)
-                -> resources.put(className.replaceAll("\\.", "/"), bytes));
+        this.resources.forEach((className, bytes) -> {
+            String name = className.substring(0, className.lastIndexOf("\\."));
+            name = name.replaceAll("\\.", "/");
+            resources.put(name + className.substring(className.lastIndexOf("\\.") + 1), bytes);
+        });
         return resources;
     }
 
