@@ -3,15 +3,13 @@ package com.envyclient.fusion.injection.hook;
 import com.envyclient.fusion.injection.hook.manifest.At;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import me.mat.jprocessor.jar.clazz.MemoryClass;
-import me.mat.jprocessor.jar.clazz.MemoryInstructions;
-import me.mat.jprocessor.jar.clazz.MemoryMethod;
+import me.mat.jprocessor.jar.memory.MemoryClass;
+import me.mat.jprocessor.jar.memory.MemoryInstructions;
+import me.mat.jprocessor.jar.memory.MemoryMethod;
 import me.mat.jprocessor.transformer.MethodTransformer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.LineNumberNode;
-import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -27,6 +25,7 @@ public class MethodHook implements MethodTransformer {
     @NonNull
     private final At at;
 
+
     @NonNull
     private final HookDefinition hookDefinition;
 
@@ -34,6 +33,11 @@ public class MethodHook implements MethodTransformer {
 
     @Override
     public void transform(MemoryClass memoryClass, MemoryMethod memoryMethod) {
+    }
+
+    @Override
+    public void transform(MemoryClass memoryClass, MemoryMethod memoryMethod,
+                          MemoryInstructions memoryInstructions, AbstractInsnNode abstractInsnNode) {
         // if the current class it not the hook class
         if (!memoryClass.equals(classHook.getHookClass())) {
             // return out of the method
@@ -46,6 +50,12 @@ public class MethodHook implements MethodTransformer {
             return;
         }
 
+        // if the node does not match the definition
+        if (!hookDefinition.isInstruction(abstractInsnNode)) {
+            // return out of the method
+            return;
+        }
+
         // define a new list of instructions
         MemoryInstructions instructions = new MemoryInstructions();
 
@@ -53,17 +63,19 @@ public class MethodHook implements MethodTransformer {
         instructions.addInvoke(wrapperMethod);
 
         // insert the invoke instruction into the hook method
-        memoryMethod.instructions.insertAfter(findHookPoint(memoryMethod), instructions);
+        memoryMethod.instructions.insertAfter(abstractInsnNode, instructions);
     }
 
-    @Override
-    public void transform(MemoryClass memoryClass, MemoryMethod memoryMethod,
-                          MemoryInstructions memoryInstructions, AbstractInsnNode abstractInsnNode) {
-    }
+    /**
+     * Initializes the method hook
+     *
+     * @param definitionMethod definition of the method that will be copied over
+     * @return {@link MethodHook}
+     */
 
     public MethodHook init(MemoryMethod definitionMethod) {
         // inject the wrapper method into the class
-        this.wrapperMethod = classHook.injectMethod(
+        wrapperMethod = classHook.injectMethod(
                 Opcodes.ACC_PUBLIC,
                 definitionMethod.name() + "Hook" + at + Math.abs(ThreadLocalRandom.current().nextInt(256)),
                 definitionMethod.description(),
@@ -72,11 +84,33 @@ public class MethodHook implements MethodTransformer {
         );
 
         // copy over the definition instructions into the new injected method
-        definitionMethod.instructions.addInto(this.wrapperMethod.instructions, true);
+        definitionMethod.instructions.addInto(wrapperMethod.instructions, true);
+
+        for (int i = 0; i < wrapperMethod.instructions.size(); i++) {
+            AbstractInsnNode instruction = wrapperMethod.instructions.get(i);
+            if (instruction instanceof FieldInsnNode) {
+                FieldInsnNode fieldInsnNode = (FieldInsnNode) instruction;
+                if (fieldInsnNode.owner.equals(definitionMethod.parent.name())) {
+                    if (!fieldInsnNode.owner.equals(classHook.getHookClass().name())) {
+                        fieldInsnNode.owner = classHook.getHookClass().name();
+                    }
+                }
+            }
+        }
+
+        // clear all the definition instructions
+        definitionMethod.instructions.clear();
 
         // return the handle of this hook
         return this;
     }
+
+    /**
+     * Checks if the provided method should be hooked
+     *
+     * @param memoryMethod method that you want to check
+     * @return {@link Boolean}
+     */
 
     private boolean isHookMethod(MemoryMethod memoryMethod) {
         // define the name and the description
@@ -109,29 +143,6 @@ public class MethodHook implements MethodTransformer {
 
         // if nothing was matched return false out of the method
         return false;
-    }
-
-    private AbstractInsnNode findHookPoint(MemoryMethod method) {
-        boolean isOverLine = false;
-        InsnList instructions = method.getInstructions();
-        for (int i = 0; i < instructions.size(); i++) {
-            AbstractInsnNode instruction = instructions.get(i);
-            if (instruction instanceof LineNumberNode) {
-                LineNumberNode lineNumberNode = (LineNumberNode) instruction;
-                if (lineNumberNode.line >= hookDefinition.line) {
-                    isOverLine = true;
-                }
-            } else if (instruction instanceof MethodInsnNode) {
-                MethodInsnNode methodInsnNode = (MethodInsnNode) instruction;
-                if (methodInsnNode.owner.endsWith(hookDefinition.typeClass.name())
-                        && methodInsnNode.name.equals(hookDefinition.name)
-                        && methodInsnNode.desc.equals(hookDefinition.description)
-                        && isOverLine) {
-                    return methodInsnNode;
-                }
-            }
-        }
-        throw new RuntimeException("Failed to find the hooking point");
     }
 
 }

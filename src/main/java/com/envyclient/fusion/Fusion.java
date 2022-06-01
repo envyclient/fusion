@@ -2,13 +2,18 @@ package com.envyclient.fusion;
 
 import com.envyclient.fusion.injection.InjectionConfiguration;
 import com.envyclient.fusion.injection.hook.ClassHook;
+import com.envyclient.fusion.util.ClassPath;
 import me.mat.jprocessor.JProcessor;
-import me.mat.jprocessor.jar.MemoryJar;
-import me.mat.jprocessor.jar.clazz.MemoryClass;
+import me.mat.jprocessor.jar.memory.MemoryClass;
+import me.mat.jprocessor.jar.memory.MemoryJar;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarOutputStream;
 import java.util.stream.Stream;
 
 public class Fusion {
@@ -18,11 +23,38 @@ public class Fusion {
 
     private final MemoryJar memoryJar;
 
-    public Fusion(Map<String, byte[]> data, Map<String, String> configurations) {
-        this.memoryJar = JProcessor.Jar.load(data, "net.minecraft.client.main.Main");
+    public Fusion(File... files) {
+        // define a new class path
+        ClassPath classPath = new ClassPath(false);
+
+        // if any files were provided
+        if (files != null) {
+
+            // loop through all the provided files
+            Stream.of(files).forEach(file -> {
+
+                // if the file is a directory
+                if (file.isDirectory()) {
+
+                    // scan through the directory for classes and jars
+                    classPath.scan(file, file.getParentFile());
+                } else {
+
+                    // else just load the jar into the memory
+                    classPath.loadJar(file);
+                }
+            });
+        }
+
+        // load the jar into memory with the main class provided
+        this.memoryJar = JProcessor.Jar.load(
+                classPath.getClasses(),
+                classPath.getResources(),
+                "net.minecraft.client.main.Main"
+        );
 
         // load all the injection configurations
-        configurations.forEach((name, configuration) -> configurationList.add(InjectionConfiguration.load(configuration)));
+        classPath.getConfigurations().forEach((name, configuration) -> configurationList.add(InjectionConfiguration.load(configuration)));
 
         // loop through all the hook definitions
         configurationList.forEach(injectionConfiguration
@@ -43,6 +75,7 @@ public class Fusion {
         classHooks.forEach(ClassHook::transform);
     }
 
+
     /**
      * Exports all the classes to a map
      *
@@ -52,5 +85,46 @@ public class Fusion {
     public Map<String, byte[]> export() {
         return memoryJar.exportClasses();
     }
+
+    /**
+     * Saves the jar from memory
+     * to a file on the disk
+     *
+     * @param file    file that you want to save to
+     * @param comment comment on the output jar file
+     */
+
+    public void save(File file, String comment) {
+        // log to console that the jar from memory is being saved to a file
+        JProcessor.Logging.info("Saving the jar from memory to '%s'", file.getAbsolutePath());
+
+        // create the jar output stream
+        try (JarOutputStream out = new JarOutputStream(Files.newOutputStream(file.toPath()))) {
+
+            // if the comment is provided
+            if (comment != null) {
+                // set the jar comment
+                out.setComment(comment);
+            }
+
+            Map<String, MemoryClass> classes = memoryJar.getClasses();
+
+            // alert the user that classes are being written
+            JProcessor.Logging.info("Writing %d classes...", classes.size());
+
+            // loop through all the class nodes and write them to the stream
+            classes.forEach((name, memoryClass) -> {
+                if (name.startsWith("net/minecraft")) {
+                    memoryClass.write(memoryJar, out);
+                }
+            });
+
+            // alert the user that classes are finished writing
+            JProcessor.Logging.info("Finished writing classes");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }

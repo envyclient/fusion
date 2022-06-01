@@ -6,11 +6,10 @@ import com.envyclient.fusion.injection.hook.manifest.Hook;
 import com.envyclient.fusion.injection.hook.manifest.HookAt;
 import lombok.Getter;
 import lombok.NonNull;
-import me.mat.jprocessor.jar.MemoryJar;
-import me.mat.jprocessor.jar.clazz.MemoryAnnotation;
-import me.mat.jprocessor.jar.clazz.MemoryClass;
-import me.mat.jprocessor.jar.clazz.MemoryField;
-import me.mat.jprocessor.jar.clazz.MemoryMethod;
+import me.mat.jprocessor.jar.memory.MemoryAnnotation;
+import me.mat.jprocessor.jar.memory.MemoryClass;
+import me.mat.jprocessor.jar.memory.MemoryJar;
+import me.mat.jprocessor.jar.memory.MemoryMethod;
 import me.mat.jprocessor.transformer.ClassTransformer;
 
 import java.util.ArrayList;
@@ -50,13 +49,6 @@ public class ClassHook implements ClassTransformer {
 
     @Override
     public void transform(MemoryClass memoryClass) {
-
-    }
-
-    @Override
-    public void transform(MemoryClass memoryClass, MemoryMethod memoryMethod) {
-        // transform all the method hooks
-        hooks.forEach(methodHook -> methodHook.transform(memoryClass, memoryMethod));
     }
 
     /**
@@ -66,6 +58,9 @@ public class ClassHook implements ClassTransformer {
     public void transform() {
         // transform the hook class
         this.hookClass.transform(this);
+
+        // transform all the hooks
+        this.hooks.forEach(this.hookClass::transform);
     }
 
     /**
