@@ -22,7 +22,7 @@ public class Fusion {
 
     public Fusion(File... files) {
         // define a new class path
-        ClassPath classPath = new ClassPath(false);
+        ClassPath classPath = new ClassPath(true);
 
         // if any files were provided
         if (files != null) {
@@ -31,14 +31,25 @@ public class Fusion {
             Stream.of(files).forEach(file -> {
 
                 // if the file is a directory
-                if (file.isDirectory()) {
+                if (!file.isDirectory()) {
 
-                    // scan through the directory for classes and jars
-                    classPath.scan(file, file.getParentFile());
+                    // get the path to the file
+                    String name = file.getAbsolutePath();
+
+                    // if the path ends with a .jar
+                    if (name.endsWith(".jar")) {
+
+                        // load the jar into the class path
+                        classPath.loadJar(file);
+                    } else {
+
+                        // else pass the file to the load function to load all the classes
+                        classPath.load(file, file.getParentFile());
+                    }
                 } else {
 
-                    // else just load the jar into the memory
-                    classPath.loadJar(file);
+                    // else scan the directory for jars and classes
+                    classPath.scan(file, file);
                 }
             });
         }

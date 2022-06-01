@@ -107,7 +107,7 @@ public class ClassPath {
      * @param parent parent of the file
      */
 
-    private void load(File file, File parent) {
+    public void load(File file, File parent) {
         // get the name of the file
         String name = file.getAbsolutePath().substring(parent.getAbsolutePath().length() + 1);
 
@@ -126,15 +126,18 @@ public class ClassPath {
                 throw new RuntimeException(e);
             }
 
+            // else replace all the slashes with dots
+            name = name.replaceAll("\\\\", ".");
+            name = name.replaceAll("/", ".");
+
             // if the name ends with a class suffix
             if (name.endsWith(CLASS_SUFFIX)) {
 
-                // else replace all the slashes with dots
-                name = name.replaceAll("\\\\", ".");
-                name = name.replaceAll("/", ".");
+                // remove the class suffix
+                name = name.substring(0, name.length() - CLASS_SUFFIX.length());
 
                 // load the class into the class path
-                classes.put(name.substring(0, name.length() - CLASS_SUFFIX.length()), data);
+                classes.put(name, data);
             } else {
 
                 // else load the resource
@@ -161,6 +164,12 @@ public class ClassPath {
      */
 
     public void loadJar(File file) {
+        // if the file does not exist
+        if (!file.exists()) {
+            // return out of the method
+            return;
+        }
+
         // load the jar file
         try (JarFile jarFile = new JarFile(file)) {
 

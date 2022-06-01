@@ -102,7 +102,7 @@ public class ClassHook implements ClassTransformer {
         }
 
         // if the hook definition class does not have a hook annotation throw an exception
-        throw new RuntimeException(hookDefinitionClass.getClass().getName() + " does not have a Hook annotation");
+        throw new RuntimeException(hookDefinitionClass.name() + " does not have a Hook annotation");
     }
 
     /**
