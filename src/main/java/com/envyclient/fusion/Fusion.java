@@ -8,12 +8,9 @@ import me.mat.jprocessor.jar.memory.MemoryClass;
 import me.mat.jprocessor.jar.memory.MemoryJar;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarOutputStream;
 import java.util.stream.Stream;
 
 public class Fusion {
@@ -90,40 +87,11 @@ public class Fusion {
      * Saves the jar from memory
      * to a file on the disk
      *
-     * @param file    file that you want to save to
-     * @param comment comment on the output jar file
+     * @param file file that you want to save to
      */
 
-    public void save(File file, String comment) {
-        // log to console that the jar from memory is being saved to a file
-        JProcessor.Logging.info("Saving the jar from memory to '%s'", file.getAbsolutePath());
-
-        // create the jar output stream
-        try (JarOutputStream out = new JarOutputStream(Files.newOutputStream(file.toPath()))) {
-
-            // if the comment is provided
-            if (comment != null) {
-                // set the jar comment
-                out.setComment(comment);
-            }
-
-            Map<String, MemoryClass> classes = memoryJar.getClasses();
-
-            // alert the user that classes are being written
-            JProcessor.Logging.info("Writing %d classes...", classes.size());
-
-            // loop through all the class nodes and write them to the stream
-            classes.forEach((name, memoryClass) -> {
-                if (name.startsWith("net/minecraft")) {
-                    memoryClass.write(memoryJar, out);
-                }
-            });
-
-            // alert the user that classes are finished writing
-            JProcessor.Logging.info("Finished writing classes");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void save(File file) {
+        memoryJar.save(file, "net/minecraft");
     }
 
 
