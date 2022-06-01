@@ -126,12 +126,11 @@ public class ClassPath {
                 throw new RuntimeException(e);
             }
 
-            // else replace all the slashes with dots
-            name = name.replaceAll("\\\\", ".");
-            name = name.replaceAll("/", ".");
-
             // if the name ends with a class suffix
             if (name.endsWith(CLASS_SUFFIX)) {
+                // else replace all the slashes with dots
+                name = name.replaceAll("\\\\", ".");
+                name = name.replaceAll("/", ".");
 
                 // remove the class suffix
                 name = name.substring(0, name.length() - CLASS_SUFFIX.length());
@@ -185,9 +184,6 @@ public class ClassPath {
                 // get current entries name
                 String name = jarEntry.getName();
 
-                // replace the slashes with the dots
-                name = name.replaceAll("/", ".");
-
                 // test it against the predicate
                 if (!jarEntry.isDirectory()) {
 
@@ -202,6 +198,10 @@ public class ClassPath {
 
                         // if the name ends with the class suffix
                         if (name.endsWith(CLASS_SUFFIX)) {
+
+                            // else replace all the slashes with dots
+                            name = name.replaceAll("\\\\", ".");
+                            name = name.replaceAll("/", ".");
 
                             // remove the class suffix from the name
                             name = name.substring(0, name.length() - CLASS_SUFFIX.length());
