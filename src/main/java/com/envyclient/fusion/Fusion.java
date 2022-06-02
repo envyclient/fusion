@@ -24,6 +24,76 @@ public class Fusion {
         // define a new class path
         ClassPath classPath = new ClassPath(true);
 
+        // load all the extra files to the class path
+        this.loadToClassPath(classPath, files);
+
+        // load the jar into memory with the main class provided
+        this.memoryJar = JProcessor.Jar.load(
+                classPath.getClasses(),
+                classPath.getResources(),
+                "net.minecraft.client.main.Main"
+        );
+
+        // load all the injection configurations
+        classPath.getConfigurations().forEach((name, configuration)
+                -> configurationList.add(InjectionConfiguration.load(configuration)));
+
+        // loop through all the hook definitions
+        configurationList.forEach(injectionConfiguration
+                -> Stream.of(injectionConfiguration.hookDefinitions).forEach(definition -> {
+
+            // get the class of the definition
+            MemoryClass definitionClass = memoryJar.getClass(definition);
+
+            // if the class is valid
+            if (definitionClass != null) {
+
+                // add a new class hook
+                classHooks.add(new ClassHook(definitionClass, memoryJar));
+            }
+        }));
+    }
+
+    /**
+     * Transforms and injects all the hooks
+     */
+
+    public void transform() {
+        // transform all the hooks classes
+        classHooks.forEach(ClassHook::transform);
+    }
+
+
+    /**
+     * Exports all the classes to a map
+     *
+     * @return {@link Map}
+     */
+
+    public Map<String, byte[]> export() {
+        return memoryJar.getClassData();
+    }
+
+    /**
+     * Saves the jar from memory
+     * to a file on the disk
+     *
+     * @param file file that you want to save to
+     */
+
+    public void save(File file) {
+        memoryJar.save(file, "net/minecraft", "com/");
+    }
+
+    /**
+     * Loads all the provided files
+     * into the provided class path
+     *
+     * @param classPath class path that you want to load into
+     * @param files     files that you want to load into the class path
+     */
+
+    private void loadToClassPath(ClassPath classPath, File... files) {
         // if any files were provided
         if (files != null) {
 
@@ -53,58 +123,6 @@ public class Fusion {
                 }
             });
         }
-
-        // load the jar into memory with the main class provided
-        this.memoryJar = JProcessor.Jar.load(
-                classPath.getClasses(),
-                classPath.getResources(),
-                "net.minecraft.client.main.Main"
-        );
-
-        // load all the injection configurations
-        classPath.getConfigurations().forEach((name, configuration)
-                -> configurationList.add(InjectionConfiguration.load(configuration)));
-
-        // loop through all the hook definitions
-        configurationList.forEach(injectionConfiguration
-                -> Stream.of(injectionConfiguration.hookDefinitions).forEach(definition -> {
-
-            // get the class of the definition
-            MemoryClass definitionClass = memoryJar.getClass(definition);
-
-            // if the class is valid
-            if (definitionClass != null) {
-
-                // add a new class hook
-                classHooks.add(new ClassHook(definitionClass, memoryJar));
-            }
-        }));
-
-        // transform all the hooks classes
-        classHooks.forEach(ClassHook::transform);
     }
-
-
-    /**
-     * Exports all the classes to a map
-     *
-     * @return {@link Map}
-     */
-
-    public Map<String, byte[]> export() {
-        return memoryJar.exportClasses();
-    }
-
-    /**
-     * Saves the jar from memory
-     * to a file on the disk
-     *
-     * @param file file that you want to save to
-     */
-
-    public void save(File file) {
-        memoryJar.save(file, "net/minecraft");
-    }
-
 
 }
