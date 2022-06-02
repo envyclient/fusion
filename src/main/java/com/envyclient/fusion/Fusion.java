@@ -3,6 +3,7 @@ package com.envyclient.fusion;
 import com.envyclient.fusion.injection.InjectionConfiguration;
 import com.envyclient.fusion.injection.hook.ClassHook;
 import com.envyclient.fusion.util.ClassPath;
+import lombok.Getter;
 import me.mat.jprocessor.JProcessor;
 import me.mat.jprocessor.jar.memory.MemoryClass;
 import me.mat.jprocessor.jar.memory.MemoryJar;
@@ -13,16 +14,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+@Getter
 public class Fusion {
 
+    @Getter
     private final List<InjectionConfiguration> configurationList = new ArrayList<>();
+
     private final List<ClassHook> classHooks = new ArrayList<>();
 
     private final MemoryJar memoryJar;
 
+    private final ClassPath classPath;
+
     public Fusion(File... files) {
         // define a new class path
-        ClassPath classPath = new ClassPath(true);
+        this.classPath = new ClassPath(true);
 
         // load all the extra files to the class path
         this.loadToClassPath(classPath, files);
