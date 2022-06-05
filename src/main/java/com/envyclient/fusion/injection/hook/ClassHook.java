@@ -187,8 +187,8 @@ public class ClassHook implements ClassTransformer {
         // if the annotation does not contain the key
         if (!memoryAnnotation.hasValue(key)) {
 
-            // throw an exception
-            throw new RuntimeException(memoryAnnotation.description().substring(0, memoryAnnotation.description().length() - 1) + " does not have a '" + key + "'");
+            // return an empty string
+            return "";
         }
 
         // else just return the value of the key

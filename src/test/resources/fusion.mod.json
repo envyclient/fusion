@@ -1,0 +1,5 @@
+{
+  "hooks": [
+    "com/envyclient/fusion/test/hooks/FusionHook"
+  ]
+}

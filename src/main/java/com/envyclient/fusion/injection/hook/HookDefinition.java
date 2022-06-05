@@ -13,7 +13,6 @@ public class HookDefinition {
     @NonNull
     public final MemoryClass typeClass;
 
-    @NonNull
     public final String name;
 
     @NonNull
@@ -23,6 +22,7 @@ public class HookDefinition {
     public final int line;
 
     private boolean isOverLine;
+    private boolean isHooked;
 
     public boolean isInstruction(AbstractInsnNode instruction) {
         // check if the node is a line number node
@@ -36,15 +36,25 @@ public class HookDefinition {
                 isOverLine = true;
             }
         } else if (instruction instanceof MethodInsnNode) {
-            // cast the to the method node
+            // cast to the method node
             MethodInsnNode methodInsnNode = (MethodInsnNode) instruction;
 
-            // check that the instruction matches the definition
-            return methodInsnNode.owner.endsWith(typeClass.name())
+            // if the node is matching the definition, and it is over the line
+            return methodInsnNode.owner.equals(typeClass.name())
                     && methodInsnNode.name.equals(name)
-                    && methodInsnNode.desc.equals(description);
+                    && methodInsnNode.desc.equals(description) && isOverLine;
         }
         return false;
+    }
+
+    /**
+     * Checks if the definition has an instruction as a target
+     *
+     * @return {@link Boolean}
+     */
+
+    public boolean hasTargetInstruction() {
+        return !name.isEmpty();
     }
 
 }

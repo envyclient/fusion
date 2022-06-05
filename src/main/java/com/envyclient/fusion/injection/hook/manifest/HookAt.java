@@ -13,6 +13,6 @@ public @interface HookAt {
 
     At at();
 
-    String definition();
+    String definition() default "";
 
 }
