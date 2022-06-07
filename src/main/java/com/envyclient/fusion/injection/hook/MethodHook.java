@@ -10,7 +10,6 @@ import me.mat.jprocessor.transformer.MethodTransformer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.LabelNode;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -166,7 +165,7 @@ public class MethodHook implements MethodTransformer {
         // if the injection point is at the head
         if (at == At.HEAD) {
             // find the current label node
-            AbstractInsnNode labelNode = getCurrentLabel(memoryMethod, abstractInsnNode);
+            AbstractInsnNode labelNode = memoryMethod.instructions.getLabelForInstruction(abstractInsnNode);
 
             // insert the invoke instruction before the label node
             memoryMethod.instructions.insertBefore(labelNode, instructions);
@@ -177,32 +176,6 @@ public class MethodHook implements MethodTransformer {
 
         // update the injected flag
         isInjected = true;
-    }
-
-    /**
-     * Gets the label that the instruction is under
-     *
-     * @param memoryMethod     method that the instruction is in
-     * @param abstractInsnNode instruction that you want to search for
-     * @return {@link AbstractInsnNode}
-     */
-
-    private AbstractInsnNode getCurrentLabel(MemoryMethod memoryMethod, AbstractInsnNode abstractInsnNode) {
-        boolean isPast = false;
-        MemoryInstructions instructions = memoryMethod.instructions;
-        for (int i = instructions.size() - 1; i > 0; i--) {
-            AbstractInsnNode instruction = instructions.get(i);
-            if (instruction.equals(abstractInsnNode)) {
-                isPast = true;
-            } else if (instruction instanceof LabelNode) {
-                if (isPast) {
-                    return instruction;
-                } else {
-                    System.out.println("label");
-                }
-            }
-        }
-        return null;
     }
 
     /**
